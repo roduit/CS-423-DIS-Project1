@@ -18,4 +18,4 @@ CS-423 Distributed Information System
 - [Contributors](#contributors)
 
 ## Contributors
-This repository has been elaborated by Fabio Palmisano and Vincent Roduit during the 2025 fall Semester.
+This repository has been elaborated by Fabio Palmisano, Yann Cretton and Vincent Roduit during the 2024 fall Semester.

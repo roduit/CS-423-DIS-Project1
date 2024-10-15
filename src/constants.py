@@ -7,23 +7,41 @@
 
 #import files
 import os
+import multiprocessing
+
+CORES = multiprocessing.cpu_count()
 
 # Path to the data folder
 DATA_FOLDER = "../data"
-if not os.path.exists("../data"):
-    os.mkdir("../data")
 
 #Path for the models
 MODEL_FOLDER = os.path.join(DATA_FOLDER, "models")
+BASE_MODEL_PATH = os.path.join(MODEL_FOLDER, "word2vec_stem")
+BASE_MODEL_NAME = "word2vec.model"
 
 #Path for pickles
 PICKLES_FOLDER = os.path.join(DATA_FOLDER, "pickles")
 
+#Path for the stopwords
+STOPWORDS_FOLDER = os.path.join(DATA_FOLDER, "stopwords")
+
+#Path for the submissions
+SUBMISSIONS_FOLDER = os.path.join(DATA_FOLDER, "submissions")
+
+
 if not os.path.exists("../data/models"):
     os.mkdir("../data/models")
 
-#Path for the stopwords
-STOPWORDS_FOLDER = os.path.join(DATA_FOLDER, "stopwords")
+if not os.path.exists("../data"):
+    os.mkdir("../data")
+
+if not os.path.exists("../data/pickles"):
+    os.mkdir("../data/pickles")
+
+if not os.path.exists("../data/submissions"):
+    os.mkdir("../data/submissions")
+
+
 
 def load_stopwords(path):
     with open(path, 'r') as f:
@@ -42,5 +60,4 @@ STOP_WORDS = {
 
 #Path for the corpus
 CORPUS = os.path.join(DATA_FOLDER, "corpus", "corpus.json")
-CORPUS_PKL = os.path.join(DATA_FOLDER, "pickles", "corpus.pkl")
-CORPUS_REDUCED_PKL = os.path.join(DATA_FOLDER, "pickles", "corpus_reduced.pkl")
+QUERIES = os.path.join(DATA_FOLDER, "test.csv")

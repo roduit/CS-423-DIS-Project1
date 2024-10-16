@@ -38,8 +38,16 @@ def tokenize(text:str, lang:str="en") -> list:
     # Combine stemming and stopword filtering into one pass for efficiency
     return [stemmer.stem(word.lower()) for word in tokens if word.lower() not in STOP_WORDS[lang] or stemmer.stem(word.lower()) not in STOP_WORDS[lang]]
 
-def tokenize_documents(file_name:str, corpus:pd.DataFrame) -> pd.DataFrame:
+def tokenize_documents(file_name:str, corpus:pd.DataFrame, drop_text:bool=True) -> pd.DataFrame:
     """Tokenize the corpus
+
+    Args:
+        * file_name(str): The name of the file to save the tokenized corpus.
+
+        * corpus(pd.DataFrame): The corpus to tokenize.
+    
+    Returns:
+        * pd.DataFrame: The tokenized corpus.
     """
     tqdm.pandas() 
     if os.path.exists(os.path.join(PICKLES_FOLDER, file_name + "_tokenized.pkl")) and os.path.exists(os.path.join(PICKLES_FOLDER, file_name + "_tokens_list.pkl")):
@@ -49,7 +57,8 @@ def tokenize_documents(file_name:str, corpus:pd.DataFrame) -> pd.DataFrame:
     else: 
         print("Tokenizing corpus")
         corpus["tokens"] = corpus.progress_apply(lambda row: tokenize(row['text'], lang=row['lang']), axis=1)
-        corpus.drop(columns=["text"], inplace=True)
+        if drop_text:
+            corpus.drop(columns=["text"], inplace=True)
         tokens_list = corpus["tokens"].tolist()
         save_data(corpus, file_name + "_tokenized.pkl", PICKLES_FOLDER)
         save_data(tokens_list, file_name + "_tokens_list.pkl", PICKLES_FOLDER)

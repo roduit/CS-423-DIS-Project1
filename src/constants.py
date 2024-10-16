@@ -49,7 +49,7 @@ def load_stopwords(path):
     return arabic_stopwords
 
 STOP_WORDS = {
-    "en": set(),
+    "en": set(load_stopwords(os.path.join(STOPWORDS_FOLDER, "english"))),
     "fr": set(load_stopwords(os.path.join(STOPWORDS_FOLDER, "french"))),
     "de": set(load_stopwords(os.path.join(STOPWORDS_FOLDER, "german"))),
     "es": set(load_stopwords(os.path.join(STOPWORDS_FOLDER, "spanish"))),

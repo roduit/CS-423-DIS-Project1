@@ -43,3 +43,27 @@ def rank_results(queries, df):
         results.append(top10_results)
     
     return results, similarities
+
+def bm25_score(query, document_id, idf, tf, avg_doc_len, doc_len, k1=1.5, b=0.75):
+    """
+    Compute the BM25 score for a given query and the document position in the corpus
+
+    :param query: list of str (tokenized query).
+    :param document_id: int (document position in every list; it's not docid).
+    :param idf: dict, with the inverse document frequency for each term.
+    :param tf: dict, with the term frequency for each term in each document.
+    :param avg_doc_len: float, with the average document length.
+    :param doc_len: list of int, with the length of each document.
+    :param k1: float (parameter).
+    :param b: float (parameter).
+    :return: float, with the BM25 score.
+    """
+    score = 0
+    doc_length = doc_len[document_id]
+    length_norm = k1 * (1 - b + b * doc_length / avg_doc_len)  # Precompute normalization factor
+    for term in set(query):  # Use set to avoid redundant term checks
+        if document_id in tf and term in tf[document_id]:
+            idf_term = idf.get(term, 0)  # Use .get() to handle missing terms
+            tf_term = tf[document_id][term]
+            score += idf_term * (tf_term * (k1 + 1) / (tf_term + length_norm))
+    return score

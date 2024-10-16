@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # -*- authors : Vincent Roduit -*-
 # -*- date : 2024-09-30 -*-
-# -*- Last revision: 2024-10-15 by Vincent Roduit -*-
+# -*- Last revision: 2024-10-16 by Vincent Roduit -*-
 # -*- python version : 3.9.19 -*-
 # -*- Description: Functions to calculate scores *-
 
@@ -61,9 +61,36 @@ def bm25_score(query, document_id, idf, tf, avg_doc_len, doc_len, k1=1.5, b=0.75
     score = 0
     doc_length = doc_len[document_id]
     length_norm = k1 * (1 - b + b * doc_length / avg_doc_len)  # Precompute normalization factor
-    for term in set(query):  # Use set to avoid redundant term checks
+
+    query_terms = set(query)  # Use set to avoid redundant term checks
+    for term in query_terms:
         if document_id in tf and term in tf[document_id]:
             idf_term = idf.get(term, 0)  # Use .get() to handle missing terms
             tf_term = tf[document_id][term]
             score += idf_term * (tf_term * (k1 + 1) / (tf_term + length_norm))
+    return score
+
+def bm25_score_precomputed(query, document_id, precomputed_scores, tf, avg_doc_len, doc_len, k1=1.5, b=0.75):
+    """
+    Compute the BM25 score using precomputed query-specific values for efficiency.
+    
+    :param query: list of str, tokenized query.
+    :param document_id: int, document position in the corpus.
+    :param precomputed_scores: dict, precomputed IDF and normalization for query terms.
+    :param tf: dict, term frequency for each document.
+    :param avg_doc_len: float, average document length.
+    :param doc_len: list of int, length of each document.
+    :param k1: float, BM25 parameter.
+    :param b: float, BM25 parameter.
+    :return: float, BM25 score for the document.
+    """
+    score = 0
+    doc_length = doc_len[document_id]
+    length_norm = k1 * (1 - b + b * doc_length / avg_doc_len)  # Normalization for document length
+
+    for term, idf_term in precomputed_scores.items():
+        if document_id in tf and term in tf[document_id]:
+            tf_term = tf[document_id][term]
+            score += idf_term * (tf_term * (k1 + 1) / (tf_term + length_norm))
+    
     return score

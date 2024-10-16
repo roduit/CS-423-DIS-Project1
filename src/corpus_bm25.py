@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # -*- authors : Vincent Roduit -*-
 # -*- date : 2024-09-30 -*-
-# -*- Last revision: 2024-10-15 by Vincent Roduit -*-
+# -*- Last revision: 2024-10-16 by Vincent Roduit -*-
 # -*- python version : 3.9.19 -*-
 # -*- Description: Class for the processing of the corpus *-
 
@@ -17,7 +17,7 @@ import math
 from utils import *
 from constants import *
 from processing import *
-from scores import bm25_score
+from scores import bm25_score, bm25_score_precomputed
 from corpus_base import CorpusBase
 
 class CorpusBm25(CorpusBase):
@@ -43,6 +43,7 @@ class CorpusBm25(CorpusBase):
                     self.load_corpus()
                 if 'tokens' not in self.corpus.columns:
                     self.tokenize_corpus()
+                print("Computing df")
                 corpus_tokenized = self.corpus['tokens'].tolist()
                 self.df = Counter(term for document in corpus_tokenized for term in set(document))
                 save_data(self.df, self.corpus_file_name + "_df.pkl", PICKLES_FOLDER)   
@@ -58,6 +59,7 @@ class CorpusBm25(CorpusBase):
             else:
                 if self.df is None:
                     self._compute_df()
+                print("Computing idf")
                 num_documents = len(self.corpus)
                 self.idf = {term: math.log(1 + (num_documents - self.df[term] + 0.5) / (self.df[term] + 0.5)) for term in self.df}
                 save_data(self.idf, self.corpus_file_name + "_idf.pkl", PICKLES_FOLDER)
@@ -75,9 +77,10 @@ class CorpusBm25(CorpusBase):
                     self.load_corpus()
                 if 'tokens' not in self.corpus.columns:
                     self.tokenize_corpus()
-                    corpus_tokenized = self.corpus['tokens'].tolist()
-                    self.tf = {i: dict(Counter(document)) for i, document in enumerate(corpus_tokenized)}
-                    save_data(self.tf, self.corpus_file_name + "_tf.pkl", PICKLES_FOLDER)
+                print("Computing tf")
+                corpus_tokenized = self.corpus['tokens'].tolist()
+                self.tf = {i: dict(Counter(document)) for i, document in enumerate(corpus_tokenized)}
+                save_data(self.tf, self.corpus_file_name + "_tf.pkl", PICKLES_FOLDER)
     
     def _compute_doc_len(self):
         """
@@ -94,6 +97,7 @@ class CorpusBm25(CorpusBase):
                     self.load_corpus()
                 if 'tokens' not in self.corpus.columns:
                     self.tokenize_corpus()
+                print("Computing doc_len")
                 self.doc_len = [len(document) for document in self.corpus['tokens'].tolist()]
                 self.avg_doc_len = sum(self.doc_len) / len(self.doc_len)
                 save_data(self.doc_len, self.corpus_file_name + "_doc_len.pkl", PICKLES_FOLDER)
@@ -117,6 +121,19 @@ class CorpusBm25(CorpusBase):
         
         return top_doc_ids
     
+    def precompute_query_scores(self, query, idf):
+        """
+        Precompute query-specific BM25 components like IDF for each term in the query.
+        
+        :param query: list of str, tokenized query.
+        :param idf: dict, precomputed inverse document frequency for each term.
+        :return: dict, precomputed scores for each query term.
+        """
+        query_terms = set(query)
+        precomputed_scores = {term: idf.get(term, 0) for term in query_terms}
+        
+        return precomputed_scores
+    
     def get_results(self):
         """
         Get the results of the queries
@@ -135,13 +152,21 @@ class CorpusBm25(CorpusBase):
             self.load_query()
         if 'tokens' not in self.query.columns:
             self.tokenize_query()
-        #load the corpus
-        if self.corpus is None:
-            self.load_corpus()
+        
+        if os.path.exists(os.path.join(PICKLES_FOLDER, self.corpus_file_name + "_docid.pkl")):
+            print("Loading docid from pickle")
+            docid = load_data(self.corpus_file_name + "_docid.pkl", PICKLES_FOLDER)
+        if os.path.exists(os.path.join(PICKLES_FOLDER, self.corpus_file_name + "_lang.pkl")):
+            print("Loading lang from pickle")
+            lang = load_data(self.corpus_file_name + "_lang.pkl", PICKLES_FOLDER)
+        else:
+            #load the corpus
+            if self.corpus is None:
+                self.load_corpus()
 
-        #extract list of docid, lang and tokenized text from the corpus
-        docid = self.corpus['docid'].tolist()
-        lang = self.corpus['lang'].tolist()
+            #extract list of docid, lang and tokenized text from the corpus
+            docid = self.corpus['docid'].tolist()
+            lang = self.corpus['lang'].tolist()
         #extract list of tokenized text and lang from the test queries
         list_test_queries = self.query["tokens"].tolist()
         list_lang_test_queries = self.query["lang"].tolist()

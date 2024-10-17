@@ -23,6 +23,27 @@ from corpus_base import CorpusBase
 
 class CorpusBm25(CorpusBase):
     def __init__(self, corpus_path: str, query_path: str):
+        """
+        Initialize the CorpusBM25 object.
+
+        Args:
+            * corpus_path: str, the path to the corpus file.
+
+            * query_path: str, the path to the query file.
+
+        Class attributes:
+            * tf (dict): the term frequency for each term in each document.
+
+            * idf (dict): the inverse document frequency for each term.
+
+            * df (dict): the document frequency for each term.
+
+            * avg_doc_len (float): the average document length.
+
+            * doc_len (list): the length of each document in the corpus.
+
+            * results (list): the results of the queries.
+        """
         super().__init__(corpus_path, query_path)
         self.tf = None
         self.idf = None
@@ -32,8 +53,7 @@ class CorpusBm25(CorpusBase):
         self.results = None
 
     def _compute_df(self):
-        """
-        Compute the document frequency for each term in the corpus (i.e., the number of documents in which the term appears).
+        """Compute the document frequency for each term in the corpus (i.e., the number of documents in which the term appears).
         """
         if self.df is None:
             if os.path.exists(os.path.join(PICKLES_FOLDER, self.corpus_file_name + "_df.pkl")):
@@ -50,8 +70,7 @@ class CorpusBm25(CorpusBase):
                 save_data(self.df, self.corpus_file_name + "_df.pkl", PICKLES_FOLDER)   
     
     def _compute_idf(self):
-        """
-        Compute the inverse document frequency for each term in the corpus.
+        """Compute the inverse document frequency for each term in the corpus.
         """
         if self.idf is None:
             if os.path.exists(os.path.join(PICKLES_FOLDER, self.corpus_file_name + "_idf.pkl")):
@@ -66,8 +85,7 @@ class CorpusBm25(CorpusBase):
                 save_data(self.idf, self.corpus_file_name + "_idf.pkl", PICKLES_FOLDER)
     
     def _compute_tf(self):
-        """
-        Compute the term frequency for each term in each document.
+        """Compute the term frequency for each term in each document.
         """
         if self.tf is None:
             if os.path.exists(os.path.join(PICKLES_FOLDER, self.corpus_file_name + "_tf.pkl")):
@@ -84,8 +102,7 @@ class CorpusBm25(CorpusBase):
                 save_data(self.tf, self.corpus_file_name + "_tf.pkl", PICKLES_FOLDER)
     
     def _compute_doc_len(self):
-        """
-        Compute the length of each document in the corpus.
+        """Compute the length of each document in the corpus.
         """
         if self.doc_len is None or self.avg_doc_len is None:
             if os.path.exists(os.path.join(PICKLES_FOLDER, self.corpus_file_name + "_doc_len.pkl")) \
@@ -105,8 +122,19 @@ class CorpusBm25(CorpusBase):
                 save_data(self.avg_doc_len, self.corpus_file_name + "_avg_doc_len.pkl", PICKLES_FOLDER)
     
     def _BM25_search(self,query, docid,relevant_docs, k=10):
-        """
-        Compute BM25 score for all documents in the corpus for a given query and language and return the top-k documents
+        """Compute BM25 score for all documents in the corpus for a given query and language and return the top-k documents
+
+        Args:
+            * query (list): the tokenized query.
+
+            * docid (list): the list of document IDs.
+
+            * relevant_docs (list): the list of relevant document IDs.
+
+            * k (int): the number of documents to return.
+
+        Returns:
+            * top_doc_ids (list): the list of document IDs with the highest BM25 scores.
         """
 
         # Calculate scores only for relevant documents
@@ -122,8 +150,7 @@ class CorpusBm25(CorpusBase):
         return top_doc_ids
     
     def get_results(self):
-        """
-        Get the results of the queries
+        """Get the results of the queries
         """
         self.results = []
 
@@ -154,16 +181,16 @@ class CorpusBm25(CorpusBase):
             #extract list of docid, lang and tokenized text from the corpus
             docid = self.corpus['docid'].tolist()
             lang = self.corpus['lang'].tolist()
+
         #extract list of tokenized text and lang from the test queries
         list_test_queries = self.query["tokens"].tolist()
         list_lang_test_queries = self.query["lang"].tolist()
 
+        # Create a dictionary with the relevant documents for each language
         langs = set(lang)
         dict_relevant_docs = {l: [i for i in range(len(docid)) if lang[i] == l] for l in langs}
 
-        # Loop over each query
-
-        #calculate the time taken to process the queries
+        # Loop over each query and calculate the BM25 scores
         start = time()
         for idx, query in tqdm(enumerate(list_test_queries), total=len(list_test_queries), desc="Calculating BM25 scores"):
             query_lang = list_lang_test_queries[idx]  # Get the language for the current query
@@ -181,10 +208,10 @@ class CorpusBm25(CorpusBase):
         print(f"Time taken to calculate BM25 scores: {end - start:.2f} seconds") 
 
     def create_submission(self, output_path: str):
-        """
-        Create a submission file for the BM25 model.
-        
-        :param output_path: str, the path to the output file.
+        """ Create a submission file for the BM25 model.
+
+        Args:
+            * output_path (str): the path to the output file.
         """
         if self.results is None:
             self.get_results()

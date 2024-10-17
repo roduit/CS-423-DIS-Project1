@@ -11,14 +11,15 @@ from sklearn.metrics.pairwise import cosine_similarity
 from tqdm import tqdm
 
 def rank_results(queries, df):
-    """
-    Rank the results of the queries
-    
-    :param queries: pd.DataFrame, the queries
-    :param df: pd.DataFrame, the corpus
-    :param model: Word2Vec, the Word2Vec model
+    """Rank the results of the queries based on the cosine similarity
 
-    :return: pd.DataFrame, the ranked results
+    Args:
+        * queries(pd.DataFrame): The queries with their vectors.
+
+        * df(pd.DataFrame): The corpus with the vectors.
+    
+    Returns:
+        * list: The list of the top 10 results for each query.
     """
     # Extract vectors from queries and corpus
     query_vectors = np.stack(queries['vectors'].values)
@@ -45,18 +46,27 @@ def rank_results(queries, df):
     return results, similarities
 
 def bm25_score(query, document_id, idf, tf, avg_doc_len, doc_len, k1=1.5, b=0.75):
-    """
-    Compute the BM25 score for a given query and the document position in the corpus
+    """Compute the BM25 score for a given query and the document position in the corpus
 
-    :param query: list of str (tokenized query).
-    :param document_id: int (document position in every list; it's not docid).
-    :param idf: dict, with the inverse document frequency for each term.
-    :param tf: dict, with the term frequency for each term in each document.
-    :param avg_doc_len: float, with the average document length.
-    :param doc_len: list of int, with the length of each document.
-    :param k1: float (parameter).
-    :param b: float (parameter).
-    :return: float, with the BM25 score.
+    Args:
+        * query(list): The list of query terms.
+
+        * document_id(int): The document position in the corpus.
+
+        * idf(dict): The inverse document frequency of the terms.
+
+        * tf(dict): The term frequency of the terms in the documents.
+
+        * avg_doc_len(float): The average document length.
+
+        * doc_len(dict): The length of the documents.
+
+        * k1(float): The BM25 parameter k1. Defaults to 1.5.
+
+        * b(float): The BM25 parameter b. Defaults to 0.75.
+    
+    Returns:
+        * float: The BM25 score.
     """
     score = 0
     doc_length = doc_len[document_id]

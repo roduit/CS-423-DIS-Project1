@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # -*- authors : Vincent Roduit -*-
 # -*- date : 2024-09-30 -*-
-# -*- Last revision: 2024-10-15 by Vincent Roduit -*-
+# -*- Last revision: 2024-10-17 by Vincent Roduit -*-
 # -*- python version : 3.9.19 -*-
 # -*- Description: Functions for processing *-
 
@@ -84,20 +84,20 @@ def get_vectors(words:list, model:Word2Vec) -> np.array:
     return np.mean(vectors, axis=0) if vectors else np.zeros(model.vector_size)
 
 def vectorize_documents(file_name, w2v_model, corpus) -> np.array:
-        """Get the vectors of the words from the model
+    """Get the vectors of the words from the model
 
-        Args:
-            * words(list): The list of words to get the vectors of.
+    Args:
+        * words(list): The list of words to get the vectors of.
 
-        Returns:
-            * np.array: The vectors of the words.
-        """
-        tqdm.pandas()
-        print("Getting vectors")
-        corpus["vectors"] = corpus.progress_apply(lambda row: get_vectors(row['tokens'], w2v_model), axis=1)
-        save_data(corpus, file_name + "_vectors.pkl", PICKLES_FOLDER)
+    Returns:
+        * np.array: The vectors of the words.
+    """
+    tqdm.pandas()
+    print("Getting vectors")
+    corpus["vectors"] = corpus.progress_apply(lambda row: get_vectors(row['tokens'], w2v_model), axis=1)
+    save_data(corpus, file_name + "_vectors.pkl", PICKLES_FOLDER)
 
-        return corpus
+    return corpus
 
 def create_word2vec_model(model_path='word2vec_stem', model_name='wor2vec.model', tokens_list=None,min_count=1, window=5, vector_size=100, workers=CORES-1, epochs=100):
     """Create a Word2Vec model from the tokens list and save it to a file.

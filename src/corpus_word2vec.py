@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # -*- authors : Vincent Roduit -*-
 # -*- date : 2024-09-30 -*-
-# -*- Last revision: 2024-10-15 by Vincent Roduit -*-
+# -*- Last revision: 2024-10-17 by Vincent Roduit -*-
 # -*- python version : 3.9.19 -*-
 # -*- Description: Class for the processing of the corpus *-
 
@@ -19,6 +19,20 @@ from scores import *
 
 class CorpusWord2Vec(CorpusBase):
     def __init__(self, corpus_path: str, query_path: str):
+        """Initialize the class CorpusWord2Vec
+
+        Args:
+            * corpus_path(str): The path to the corpus file
+
+            * query_path(str): The path to the query file
+        
+        Class attributes:
+            * w2v_model(Word2Vec): The Word2Vec model
+
+            * model_name(str): The name of the model
+
+            * similarities(dict): The similarities between the query and the corpus
+        """
         super().__init__(corpus_path, query_path)
         self.w2v_model = None
         self.model_name = None
@@ -73,8 +87,7 @@ class CorpusWord2Vec(CorpusBase):
             self.query = vectorize_documents(self.query_file_name, self.w2v_model, self.query)
         
     def rank_results(self):
-        """
-        Rank the results of the queries
+        """Rank the results of the queries
         """
         if self.corpus is None:
             self.vectorize_corpus()
@@ -84,8 +97,7 @@ class CorpusWord2Vec(CorpusBase):
         self.results, self.similarities = rank_results(self.query, self.corpus)
 
     def create_submission(self, output_path:str):
-        """
-        Create the submission file
+        """Create the submission file
 
         Args:
             * output_path(str): The path to save the submission file

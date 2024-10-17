@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # -*- authors : Vincent Roduit -*-
 # -*- date : 2024-09-30 -*-
-# -*- Last revision: 2024-10-15 by Vincent Roduit -*-
+# -*- Last revision: 2024-10-17 by Vincent Roduit -*-
 # -*- python version : 3.9.19 -*-
 # -*- Description: Class for the processing of the corpus *-
 
@@ -18,6 +18,31 @@ from scores import *
 
 class CorpusBase:
     def __init__(self, corpus_path: str, query_path: str):
+        """ Initialize the CorpusBase object.
+        Args:
+            * corpus_path (str): the path to the corpus file.
+
+            * query_path (str): the path to the query file.
+
+        Class attributes:
+            * corpus (pd.DataFrame): the corpus.
+
+            * corpus_path (str): the path to the corpus file.
+
+            * corpus_file_name (str): the name of the corpus file.
+
+            * query_file_name (str): the name of the query file.
+
+            * tokens_list (list): the tokens list.
+
+            * results (list): the results of the queries.
+
+            * query (pd.DataFrame): the query.
+
+            * query_tokens_list (list): the query tokens list.
+
+            * query_path (str): the path to the query file.
+        """
         self.corpus = None
         self.corpus_path = corpus_path
         self.corpus_file_name = corpus_path.split('/')[-1].split('.')[0]
@@ -29,8 +54,7 @@ class CorpusBase:
         self.query_path = query_path
 
     def load_corpus(self):
-        """
-        Load the corpus
+        """Load the corpus
         """
         if os.path.exists(os.path.join(PICKLES_FOLDER, self.corpus_file_name + ".pkl")):
             print("Loading corpus from pickle")
@@ -46,8 +70,7 @@ class CorpusBase:
             save_data(self.corpus, self.corpus_file_name + ".pkl", PICKLES_FOLDER)
     
     def load_query(self):
-        """
-        Load the query
+        """Load the query
         """
         if os.path.exists(os.path.join(PICKLES_FOLDER, self.query_file_name + ".pkl")):
             print("Loading query from pickle")
@@ -59,6 +82,9 @@ class CorpusBase:
 
     def tokenize_corpus(self, drop_text=True):
         """Tokenize the corpus
+
+        Args:
+            * drop_text (bool): whether to drop the text column or not.
         """
         if self.corpus is None:
             self.load_corpus()
@@ -66,6 +92,9 @@ class CorpusBase:
     
     def tokenize_query(self, drop_text=True):
         """Tokenize the query
+
+        Args:
+            * drop_text (bool): whether to drop the text column or not.
         """
         if self.query is None:
             self.load_query()

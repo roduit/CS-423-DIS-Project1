@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # -*- authors : Vincent Roduit -*-
 # -*- date : 2024-09-30 -*-
-# -*- Last revision: 2024-10-16 by Vincent Roduit -*-
+# -*- Last revision: 2024-10-17 by Vincent Roduit -*-
 # -*- python version : 3.9.19 -*-
 # -*- Description: Constants used in the code *-
 
@@ -9,7 +9,7 @@
 import os
 import multiprocessing
 
-CORES = multiprocessing.cpu_count()
+CORES = multiprocessing.cpu_count() - 2
 
 # Path to the data folder
 DATA_FOLDER = "../data"
@@ -62,3 +62,5 @@ STOP_WORDS = {
 CORPUS = os.path.join(DATA_FOLDER, "corpus", "corpus.json")
 CORPUS_REDUCED = os.path.join(DATA_FOLDER, "corpus", "corpus_reduced.json")
 QUERIES = os.path.join(DATA_FOLDER, "test.csv")
+QUERIES_REDUCED = os.path.join(DATA_FOLDER, "test_reduced.csv")
+QUERIES_TRAIN = os.path.join(DATA_FOLDER, "train.csv")

@@ -12,7 +12,8 @@ from tqdm import tqdm
 from collections import Counter
 import math
 from time import time
-
+import multiprocessing as mp
+from collections import defaultdict
 
 #import files
 from utils import *
@@ -22,7 +23,7 @@ from scores import bm25_score
 from corpus_base import CorpusBase
 
 class CorpusBm25(CorpusBase):
-    def __init__(self, corpus_path: str, query_path: str):
+    def __init__(self, corpus_path: str, query_path: str, k1:float=1.5, b:float=0.75):
         """
         Initialize the CorpusBM25 object.
 
@@ -43,6 +44,12 @@ class CorpusBm25(CorpusBase):
             * doc_len (list): the length of each document in the corpus.
 
             * results (list): the results of the queries.
+
+            * k1 (float): the BM25 parameter k1.
+
+            * b (float): the BM25 parameter b.
+
+            * cores (int): the number of cores to use for parallel processing.
         """
         super().__init__(corpus_path, query_path)
         self.tf = None
@@ -51,6 +58,9 @@ class CorpusBm25(CorpusBase):
         self.avg_doc_len = None
         self.doc_len = None
         self.results = None
+        self.inverted_index = None
+        self.k1 = k1
+        self.b = b
 
     def _compute_df(self):
         """Compute the document frequency for each term in the corpus (i.e., the number of documents in which the term appears).
@@ -120,6 +130,34 @@ class CorpusBm25(CorpusBase):
                 self.avg_doc_len = sum(self.doc_len) / len(self.doc_len)
                 save_data(self.doc_len, self.corpus_file_name + "_doc_len.pkl", PICKLES_FOLDER)
                 save_data(self.avg_doc_len, self.corpus_file_name + "_avg_doc_len.pkl", PICKLES_FOLDER)
+
+    def _compute_length_norm(self):
+        """Compute the length normalization factor for a given document length.
+
+        Args:
+            * doc_len (int): the length of the document.
+
+            * avg_doc_len (float): the average document length.
+
+            * k1 (float): the BM25 parameter k1. Defaults to 1.5.
+
+            * b (float): the BM25 parameter b. Defaults to 0.75.
+        """
+        if self.doc_len is None:
+            self._compute_doc_len()
+        if self.avg_doc_len is None:
+            self._compute_doc_len()
+        print("Computing length_norm")
+        self.length_norm = [self.k1 * (1 - self.b + self.b * doc_length / self.avg_doc_len) for doc_length in self.doc_len]
+    
+    def _compute_inverted_index(self):
+        print("Computing inverted index")
+        self.inverted_index = {}
+        for doc_id, doc in self.tf.items():
+            for word, freq in doc.items():
+                if word not in self.inverted_index:
+                    self.inverted_index[word] = {}
+                self.inverted_index[word][doc_id] = freq
     
     def _BM25_search(self,query, docid,relevant_docs, k=10):
         """Compute BM25 score for all documents in the corpus for a given query and language and return the top-k documents
@@ -140,7 +178,8 @@ class CorpusBm25(CorpusBase):
         # Calculate scores only for relevant documents
         scores = []
         for i in relevant_docs:
-            score = bm25_score(query, i, self.idf, self.tf, self.avg_doc_len, self.doc_len)
+            length_norm = self.length_norm[i]
+            score = bm25_score(query, i, self.idf, self.tf, length_norm, self.k1, self.b)
             scores.append((score, docid[i]))
 
         # Sort and get top-k documents by score
@@ -148,6 +187,19 @@ class CorpusBm25(CorpusBase):
         top_doc_ids = [doc_id for _, doc_id in scores[:k]]
         
         return top_doc_ids
+    
+    def _get_relevant_docs(self, query, relevant_docs, k=10000):
+        query_test = set(query)
+        rel_docs = defaultdict(int)
+        for word in query_test:
+            if word in self.inverted_index:
+                for doc_id in self.inverted_index[word]:
+                    rel_docs[doc_id] += 1
+        sorted_rel_docs = np.array(sorted(rel_docs.items(), key=lambda x: x[1], reverse=True))
+        rel_docs_ids = np.intersect1d(sorted_rel_docs, relevant_docs)
+        rel_docs_ids = rel_docs_ids[:k] if len(rel_docs_ids) > k else rel_docs_ids
+        return rel_docs_ids
+
     
     def get_results(self):
         """Get the results of the queries
@@ -160,6 +212,8 @@ class CorpusBm25(CorpusBase):
         self._compute_idf()
         self._compute_tf()
         self._compute_doc_len()
+        self._compute_length_norm()
+        self._compute_inverted_index()
 
         # Load the queries
         if self.query is None:
@@ -196,7 +250,8 @@ class CorpusBm25(CorpusBase):
             query_lang = list_lang_test_queries[idx]  # Get the language for the current query
             
             # Get the top 10 documents for the current query
-            relevant_docs = dict_relevant_docs[query_lang]
+            relevant_docs = np.array(dict_relevant_docs[query_lang])
+            relevant_docs = self._get_relevant_docs(query, relevant_docs)
             top_docs = self._BM25_search(query, docid,relevant_docs, k=10)
             
             # Append the result as a dictionary

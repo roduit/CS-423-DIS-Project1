@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # -*- authors : Vincent Roduit -*-
 # -*- date : 2024-09-30 -*-
-# -*- Last revision: 2024-10-16 by Vincent Roduit -*-
+# -*- Last revision: 2024-10-17 by Vincent Roduit -*-
 # -*- python version : 3.9.19 -*-
 # -*- Description: Class for the processing of the corpus *-
 
@@ -11,13 +11,14 @@ import pandas as pd
 from tqdm import tqdm
 from collections import Counter
 import math
+from time import time
 
 
 #import files
 from utils import *
 from constants import *
 from processing import *
-from scores import bm25_score, bm25_score_precomputed
+from scores import bm25_score
 from corpus_base import CorpusBase
 
 class CorpusBm25(CorpusBase):
@@ -103,12 +104,11 @@ class CorpusBm25(CorpusBase):
                 save_data(self.doc_len, self.corpus_file_name + "_doc_len.pkl", PICKLES_FOLDER)
                 save_data(self.avg_doc_len, self.corpus_file_name + "_avg_doc_len.pkl", PICKLES_FOLDER)
     
-    def _BM25_search(self,query, docid, lang, target_lang, k=10):
+    def _BM25_search(self,query, docid,relevant_docs, k=10):
         """
         Compute BM25 score for all documents in the corpus for a given query and language and return the top-k documents
         """
-        # Filter docid and doc_len by language once
-        relevant_docs = [i for i in range(len(docid)) if lang[i] == target_lang]
+
         # Calculate scores only for relevant documents
         scores = []
         for i in relevant_docs:
@@ -120,19 +120,6 @@ class CorpusBm25(CorpusBase):
         top_doc_ids = [doc_id for _, doc_id in scores[:k]]
         
         return top_doc_ids
-    
-    def precompute_query_scores(self, query, idf):
-        """
-        Precompute query-specific BM25 components like IDF for each term in the query.
-        
-        :param query: list of str, tokenized query.
-        :param idf: dict, precomputed inverse document frequency for each term.
-        :return: dict, precomputed scores for each query term.
-        """
-        query_terms = set(query)
-        precomputed_scores = {term: idf.get(term, 0) for term in query_terms}
-        
-        return precomputed_scores
     
     def get_results(self):
         """
@@ -171,18 +158,27 @@ class CorpusBm25(CorpusBase):
         list_test_queries = self.query["tokens"].tolist()
         list_lang_test_queries = self.query["lang"].tolist()
 
+        langs = set(lang)
+        dict_relevant_docs = {l: [i for i in range(len(docid)) if lang[i] == l] for l in langs}
+
         # Loop over each query
-        for idx, query in tqdm(enumerate(list_test_queries), total=len(list_test_queries), desc="Processing queries"):
+
+        #calculate the time taken to process the queries
+        start = time()
+        for idx, query in tqdm(enumerate(list_test_queries), total=len(list_test_queries), desc="Calculating BM25 scores"):
             query_lang = list_lang_test_queries[idx]  # Get the language for the current query
             
             # Get the top 10 documents for the current query
-            top_docs = self._BM25_search(query, docid, lang, target_lang=query_lang, k=10)
+            relevant_docs = dict_relevant_docs[query_lang]
+            top_docs = self._BM25_search(query, docid,relevant_docs, k=10)
             
             # Append the result as a dictionary
             self.results.append({
                 'id': idx,  # You may replace idx with actual query ID if available
                 'docids': top_docs
-            })   
+            })  
+        end = time()
+        print(f"Time taken to calculate BM25 scores: {end - start:.2f} seconds") 
 
     def create_submission(self, output_path: str):
         """

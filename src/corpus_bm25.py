@@ -59,6 +59,7 @@ class CorpusBm25(CorpusBase):
         self.doc_len = None
         self.results = None
         self.inverted_index = None
+        self.term_to_id = None
         self.k1 = k1
         self.b = b
 
@@ -66,14 +67,21 @@ class CorpusBm25(CorpusBase):
         """Compute the document frequency for each term in the corpus (i.e., the number of documents in which the term appears).
         """
         if self.df is None:
-            if os.path.exists(os.path.join(PICKLES_FOLDER, self.corpus_file_name + "_df.pkl")):
+            if os.path.exists(os.path.join(PICKLES_FOLDER, self.corpus_file_name + "_df.pkl")) \
+                and os.path.exists(os.path.join(PICKLES_FOLDER, self.corpus_file_name + "_term_to_id.pkl")):
                 print("Loading df from pickle")
                 self.df = load_data(self.corpus_file_name + "_df.pkl", PICKLES_FOLDER)
+                self.term_to_id = load_data(self.corpus_file_name + "_term_to_id.pkl", PICKLES_FOLDER)
+            
             else:
                 if self.corpus is None:
                     self.load_corpus()
                 if 'tokens' not in self.corpus.columns:
                     self.tokenize_corpus()
+                if self.term_to_id is None:
+                    self.term_to_id = create_term_to_id(self.corpus['tokens'].tolist())
+                    save_data(self.term_to_id, self.corpus_file_name + "_term_to_id.pkl", PICKLES_FOLDER)
+                self.corpus['tokens'] = self.corpus['tokens'].apply(lambda x: transform_query_to_int(x, self.term_to_id))
                 print("Computing df")
                 corpus_tokenized = self.corpus['tokens'].tolist()
                 self.df = Counter(term for document in corpus_tokenized for term in set(document))
@@ -89,6 +97,8 @@ class CorpusBm25(CorpusBase):
             else:
                 if self.df is None:
                     self._compute_df()
+                if self.corpus is None:
+                    self.load_corpus()
                 print("Computing idf")
                 num_documents = len(self.corpus)
                 self.idf = {term: math.log(1 + (num_documents - self.df[term] + 0.5) / (self.df[term] + 0.5)) for term in self.df}
@@ -151,13 +161,19 @@ class CorpusBm25(CorpusBase):
         self.length_norm = [self.k1 * (1 - self.b + self.b * doc_length / self.avg_doc_len) for doc_length in self.doc_len]
     
     def _compute_inverted_index(self):
-        print("Computing inverted index")
-        self.inverted_index = {}
-        for doc_id, doc in self.tf.items():
-            for word, freq in doc.items():
-                if word not in self.inverted_index:
-                    self.inverted_index[word] = {}
-                self.inverted_index[word][doc_id] = freq
+        if os.path.exists(os.path.join(PICKLES_FOLDER, self.corpus_file_name + "_inverted_index.pkl")):
+            print("Loading inverted index from pickle")
+            self.inverted_index = load_data(self.corpus_file_name + "_inverted_index.pkl", PICKLES_FOLDER)
+        else:
+            if self.tf is None:
+                self._compute_tf()
+            self.inverted_index = {}
+            for doc_id, doc in tqdm(self.tf.items(), total=len(self.tf), desc="Computing inverted index"):
+                for word, _ in doc.items():
+                    if word not in self.inverted_index:
+                        self.inverted_index[word] = []
+                    self.inverted_index[word].append(doc_id)
+            save_data(self.inverted_index, self.corpus_file_name + "_inverted_index.pkl", PICKLES_FOLDER)
     
     def _BM25_search(self,query, docid,relevant_docs, k=10):
         """Compute BM25 score for all documents in the corpus for a given query and language and return the top-k documents
@@ -214,12 +230,6 @@ class CorpusBm25(CorpusBase):
         self._compute_doc_len()
         self._compute_length_norm()
         self._compute_inverted_index()
-
-        # Load the queries
-        if self.query is None:
-            self.load_query()
-        if 'tokens' not in self.query.columns:
-            self.tokenize_query()
         
         if os.path.exists(os.path.join(PICKLES_FOLDER, self.corpus_file_name + "_docid.pkl")):
             print("Loading docid from pickle")
@@ -234,18 +244,28 @@ class CorpusBm25(CorpusBase):
 
             #extract list of docid, lang and tokenized text from the corpus
             docid = self.corpus['docid'].tolist()
+            save_data(docid, self.corpus_file_name + "_docid.pkl", PICKLES_FOLDER)
             lang = self.corpus['lang'].tolist()
-
-        #extract list of tokenized text and lang from the test queries
-        list_test_queries = self.query["tokens"].tolist()
-        list_lang_test_queries = self.query["lang"].tolist()
+            save_data(lang, self.corpus_file_name + "_lang.pkl", PICKLES_FOLDER)
 
         # Create a dictionary with the relevant documents for each language
         langs = set(lang)
         dict_relevant_docs = {l: [i for i in range(len(docid)) if lang[i] == l] for l in langs}
 
-        # Loop over each query and calculate the BM25 scores
         start = time()
+
+        # Load the queries
+        if self.query is None:
+            self.load_query()
+        if 'tokens' not in self.query.columns:
+            self.tokenize_query()
+            self.query['tokens'] = self.query['tokens'].apply(lambda x: transform_query_to_int(x, self.term_to_id))
+
+        #extract list of tokenized text and lang from the test queries
+        list_test_queries = self.query["tokens"].tolist()
+        list_lang_test_queries = self.query["lang"].tolist()
+
+        # Loop over each query and calculate the BM25 scores
         for idx, query in tqdm(enumerate(list_test_queries), total=len(list_test_queries), desc="Calculating BM25 scores"):
             query_lang = list_lang_test_queries[idx]  # Get the language for the current query
             

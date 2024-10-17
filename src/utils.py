@@ -11,6 +11,7 @@ import os
 #import files
 from constants import *
 import pickle as pkl
+from tqdm import tqdm
 
 def save_data(data: any, file_name: str, folder: str = os.path.join(DATA_FOLDER, "pickles")):
     """Save the data to a file
@@ -47,3 +48,18 @@ def load_data(file_name: str, folder: str = os.path.join(DATA_FOLDER, "pickles")
         data = pkl.load(handle)
 
     return data
+
+def create_term_to_id(tokens_list):
+    term_to_id = {}
+    for document in tqdm(tokens_list):
+        for term in document:
+            if term not in term_to_id:
+                term_to_id[term] = len(term_to_id)
+    return term_to_id
+
+def transform_query_to_int(query, term_to_id):
+    query_int = []
+    for term in query:
+        if term in term_to_id:
+            query_int.append(term_to_id[term])
+    return query_int

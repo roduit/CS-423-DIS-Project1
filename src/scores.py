@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # -*- authors : Vincent Roduit -*-
 # -*- date : 2024-09-30 -*-
-# -*- Last revision: 2024-10-17 by Vincent Roduit -*-
+# -*- Last revision: 2024-10-18 by Vincent Roduit -*-
 # -*- python version : 3.9.19 -*-
 # -*- Description: Functions to calculate scores *-
 
@@ -80,3 +80,20 @@ def bm25_score(query, document_id, idf, tf,length_norm, k1=1.5, b=0.75):
             tf_term = tf[document_id][term]
             score += idf_term * (tf_term * (k1 + 1) / (tf_term + length_norm))
     return score
+
+def recall_at_k(results, relevant_docs, k=10):
+    """Compute the recall at k for the results
+
+    Args:
+        * results(list): The list of the top 10 results for each query.
+
+        * relevant_docs(dict): The relevant documents for each query.
+
+        * k(int): The number of results to consider. Defaults to 10.
+    
+    Returns:
+        * float: The recall at k.
+    """
+    if type(relevant_docs) == str:
+        relevant_docs = [relevant_docs]
+    return len(set(results[:k]).intersection(set(relevant_docs))) / len(relevant_docs)

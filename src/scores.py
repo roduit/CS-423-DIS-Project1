@@ -1,14 +1,18 @@
 # -*- coding: utf-8 -*-
 # -*- authors : Vincent Roduit -*-
 # -*- date : 2024-09-30 -*-
-# -*- Last revision: 2024-10-18 by Vincent Roduit -*-
+# -*- Last revision: 2024-10-20 by Vincent Roduit -*-
 # -*- python version : 3.9.19 -*-
 # -*- Description: Functions to calculate scores *-
 
-#import files
+#import librairies
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 from tqdm import tqdm
+import pandas as pd
+
+#import files
+from constants import *
 
 def rank_results(queries, df):
     """Rank the results of the queries based on the cosine similarity
@@ -20,6 +24,8 @@ def rank_results(queries, df):
     
     Returns:
         * list: The list of the top 10 results for each query.
+
+        * np.array: The cosine similarities.
     """
     # Extract vectors from queries and corpus
     query_vectors = np.stack(queries['vectors'].values)
@@ -30,7 +36,7 @@ def rank_results(queries, df):
 
     results = []
 
-    for i, row in tqdm(enumerate(queries.iterrows()), total=len(queries)):
+    for i, row in enumerate(queries.iterrows()):
         id = row[0]
         # Get similarities for the current query and sort them
         similarity_scores = similarities[i]
@@ -94,6 +100,41 @@ def recall_at_k(results, relevant_docs, k=10):
     Returns:
         * float: The recall at k.
     """
-    if type(relevant_docs) == str:
-        relevant_docs = [relevant_docs]
-    return len(set(results[:k]).intersection(set(relevant_docs))) / len(relevant_docs)
+    if relevant_docs in results:
+        return 1.0
+    else:
+        return 0.0
+
+def evaluate_recall_at_k(submission_name, queries_path):
+    df_results = pd.read_csv(os.path.join(SUBMISSIONS_FOLDER, submission_name))
+    df_queries = pd.read_csv(queries_path)
+    df_results = df_results.merge(df_queries, left_index=True, right_index=True)
+    predictions = df_results['docids'].tolist()
+    ground_truth = df_results['positive_docs'].tolist()
+    recalls = []
+    for i in range(len(predictions)):
+        pred = predictions[i]
+        gt = ground_truth[i]
+        rec = recall_at_k(pred, gt, 10)
+        recalls.append(rec)
+
+    print(f"Recall@10: {np.mean(recalls):.2f}")
+
+def evaluate_recall_at_k_per_lang(submission_name, queries_path):
+    df_queries = pd.read_csv(queries_path)
+    df_results = pd.read_csv(os.path.join(SUBMISSIONS_FOLDER, submission_name))
+    df_results = df_results.merge(df_queries, left_index=True, right_index=True)
+    langs = df_results['lang'].unique()
+    recalls = {}
+    for lang in langs:
+        df_lang = df_results[df_results['lang'] == lang]
+        predictions = df_lang['docids'].tolist()
+        ground_truth = df_lang['positive_docs'].tolist()
+        recalls[lang] = []
+        for i in range(len(predictions)):
+            pred = predictions[i]
+            gt = ground_truth[i]
+            rec = recall_at_k(pred, gt, 10)
+            recalls[lang].append(rec)
+        
+        print(f"Recall@10 for {lang}: {np.mean(recalls[lang]):.2f}")

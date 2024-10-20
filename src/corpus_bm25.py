@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # -*- authors : Vincent Roduit -*-
 # -*- date : 2024-09-30 -*-
-# -*- Last revision: 2024-10-17 by Vincent Roduit -*-
+# -*- Last revision: 2024-10-20 by Vincent Roduit -*-
 # -*- python version : 3.9.19 -*-
 # -*- Description: Class for the processing of the corpus *-
 
@@ -23,7 +23,13 @@ from scores import bm25_score
 from corpus_base import CorpusBase
 
 class CorpusBm25(CorpusBase):
-    def __init__(self, corpus_path: str, query_path: str, k1:float=1.5, b:float=0.75):
+    def __init__(
+            self, corpus_path: str, 
+            query_path: str, 
+            k1:float=1.5, 
+            b:float=0.75, 
+            filter:bool=False,
+            filt_docs:int=10000):
         """
         Initialize the CorpusBM25 object.
 
@@ -49,7 +55,9 @@ class CorpusBm25(CorpusBase):
 
             * b (float): the BM25 parameter b.
 
-            * cores (int): the number of cores to use for parallel processing.
+            * filter (bool): whether to filter the results or not.
+
+            * filt_docs (int): the number of documents to filter.
         """
         super().__init__(corpus_path, query_path)
         self.tf = None
@@ -62,6 +70,8 @@ class CorpusBm25(CorpusBase):
         self.term_to_id = None
         self.k1 = k1
         self.b = b
+        self.filter = filter
+        self.filt_docs = int(filt_docs)
 
     def _compute_df(self):
         """Compute the document frequency for each term in the corpus (i.e., the number of documents in which the term appears).
@@ -229,7 +239,8 @@ class CorpusBm25(CorpusBase):
         self._compute_tf()
         self._compute_doc_len()
         self._compute_length_norm()
-        self._compute_inverted_index()
+        if self.filter:
+            self._compute_inverted_index()
         
         if os.path.exists(os.path.join(PICKLES_FOLDER, self.corpus_file_name + "_docid.pkl")):
             print("Loading docid from pickle")
@@ -271,7 +282,8 @@ class CorpusBm25(CorpusBase):
             
             # Get the top 10 documents for the current query
             relevant_docs = np.array(dict_relevant_docs[query_lang])
-            relevant_docs = self._get_relevant_docs(query, relevant_docs)
+            if self.filter:
+                relevant_docs = self._get_relevant_docs(query, relevant_docs, self.filt_docs)
             top_docs = self._BM25_search(query, docid,relevant_docs, k=10)
             
             # Append the result as a dictionary

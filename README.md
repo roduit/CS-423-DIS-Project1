@@ -84,16 +84,20 @@ Two methods are presented in this project. One using BM25 ranking and the other 
 ## Results
 The best result is obtained using BM25 ranking algorithm. Different optimizations have been performed to increase computation time and performances.
 First, to reduce computation time, the relevant documents are reduced. The figure below shows how the number of documents affects the recall.
-
+<p align="center">
 <img src="./resources/recall_per_lang.png" alt="recall_per_lang" width="500"/>
-
+</p>
 Furthermore, the image below shows the relationship between the number of documents and the time needed to compute the ranking. It can be seen that taking K=10'000 documents is a good compromise between recall and time.
 
+<p align="center">
 <img src="./resources/recall_time.png" alt="recall_per_lang" width="500"/>
+</p>
 
 Finally the matrix below shows how the parameters $k_1$ and b affects the performances of the BM25 ranking.
 
+<p align="center">
 <img src="./resources/fine_tune.png" alt="recall_per_lang" width="500"/>
+</p>
 
 Based on these three images, the optimal solutions take these parameter values:
 - $k_1=2$

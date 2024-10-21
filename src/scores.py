@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # -*- authors : Vincent Roduit -*-
 # -*- date : 2024-09-30 -*-
-# -*- Last revision: 2024-10-20 by Vincent Roduit -*-
+# -*- Last revision: 2024-10-21 by Vincent Roduit -*-
 # -*- python version : 3.9.19 -*-
 # -*- Description: Functions to calculate scores *-
 
@@ -10,11 +10,12 @@ import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 from tqdm import tqdm
 import pandas as pd
+from typing import Tuple
 
 #import files
 from constants import *
 
-def rank_results(queries, df):
+def rank_results(queries:pd.DataFrame, df:pd.DataFrame) -> Tuple[list, np.array]:
     """Rank the results of the queries based on the cosine similarity
 
     Args:
@@ -51,7 +52,7 @@ def rank_results(queries, df):
     
     return results, similarities
 
-def bm25_score(query, document_id, idf, tf,length_norm, k1=1.5, b=0.75):
+def bm25_score(query:list, document_id:int, idf:dict, tf:dict,length_norm:float, k1:float=1.5) -> float:
     """Compute the BM25 score for a given query and the document position in the corpus
 
     Args:
@@ -63,13 +64,9 @@ def bm25_score(query, document_id, idf, tf,length_norm, k1=1.5, b=0.75):
 
         * tf(dict): The term frequency of the terms in the documents.
 
-        * avg_doc_len(float): The average document length.
-
-        * doc_len(dict): The length of the documents.
+        * length_norm(float): The length normalization of the document.
 
         * k1(float): The BM25 parameter k1. Defaults to 1.5.
-
-        * b(float): The BM25 parameter b. Defaults to 0.75.
     
     Returns:
         * float: The BM25 score.
@@ -87,7 +84,7 @@ def bm25_score(query, document_id, idf, tf,length_norm, k1=1.5, b=0.75):
             score += idf_term * (tf_term * (k1 + 1) / (tf_term + length_norm))
     return score
 
-def recall_at_k(results, relevant_docs, k=10):
+def recall_at_k(results:list, relevant_docs:str, k:int=10) -> float:
     """Compute the recall at k for the results
 
     Args:
@@ -105,7 +102,19 @@ def recall_at_k(results, relevant_docs, k=10):
     else:
         return 0.0
 
-def evaluate_recall_at_k(submission_name, queries_path):
+def evaluate_recall_at_k(submission_name:str, queries_path:str, verbose:bool=True) -> float:
+    """Evaluate the recall at k for the submission
+
+    Args:
+        * submission_name(str): The name of the submission file.
+
+        * queries_path(str): The path to the queries file.
+
+        * verbose(bool): Whether to print the results or not. Defaults to False.
+
+    Returns:
+        * float: The average recall at k.
+    """
     df_results = pd.read_csv(os.path.join(SUBMISSIONS_FOLDER, submission_name))
     df_queries = pd.read_csv(queries_path)
     df_results = df_results.merge(df_queries, left_index=True, right_index=True)
@@ -117,10 +126,24 @@ def evaluate_recall_at_k(submission_name, queries_path):
         gt = ground_truth[i]
         rec = recall_at_k(pred, gt, 10)
         recalls.append(rec)
+    if verbose:
+        print(f"Recall@10: {np.mean(recalls):.2f}")
+    return np.mean(recalls)
 
-    print(f"Recall@10: {np.mean(recalls):.2f}")
+def evaluate_recall_at_k_per_lang(submission_name:str, queries_path:str, verbose:bool=True) -> dict:
+    """Evaluate the recall at k for the submission per language
 
-def evaluate_recall_at_k_per_lang(submission_name, queries_path):
+    Args:
+        * submission_name(str): The name of the submission file.
+
+        * queries_path(str): The path to the queries file.
+
+        * verbose(bool): Whether to print the results or not. Defaults to False.
+    
+    Returns:
+        * dict: The average recall at k per language.
+    """
+    
     df_queries = pd.read_csv(queries_path)
     df_results = pd.read_csv(os.path.join(SUBMISSIONS_FOLDER, submission_name))
     df_results = df_results.merge(df_queries, left_index=True, right_index=True)
@@ -136,5 +159,8 @@ def evaluate_recall_at_k_per_lang(submission_name, queries_path):
             gt = ground_truth[i]
             rec = recall_at_k(pred, gt, 10)
             recalls[lang].append(rec)
-        
-        print(f"Recall@10 for {lang}: {np.mean(recalls[lang]):.2f}")
+        recalls[lang] = np.mean(recalls[lang])
+        if verbose:
+            print(f"Recall@10 for {lang}: {np.mean(recalls[lang]):.2f}")
+
+    return recalls

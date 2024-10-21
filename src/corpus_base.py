@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # -*- authors : Vincent Roduit -*-
 # -*- date : 2024-09-30 -*-
-# -*- Last revision: 2024-10-17 by Vincent Roduit -*-
+# -*- Last revision: 2024-10-21 by Vincent Roduit -*-
 # -*- python version : 3.9.19 -*-
 # -*- Description: Class for the processing of the corpus *-
 
@@ -17,12 +17,14 @@ from processing import *
 from scores import *
 
 class CorpusBase:
-    def __init__(self, corpus_path: str, query_path: str):
+    def __init__(self, corpus_path: str, query_path: str, verbose: bool=False):
         """ Initialize the CorpusBase object.
         Args:
             * corpus_path (str): the path to the corpus file.
 
             * query_path (str): the path to the query file.
+
+            * verbose (bool): whether to print the progress or not. Defaults to False.
 
         Class attributes:
             * corpus (pd.DataFrame): the corpus.
@@ -42,6 +44,8 @@ class CorpusBase:
             * query_tokens_list (list): the query tokens list.
 
             * query_path (str): the path to the query file.
+
+            * verbose (bool): whether to print the progress or not.
         """
         self.corpus = None
         self.corpus_path = corpus_path
@@ -52,15 +56,18 @@ class CorpusBase:
         self.query = None
         self.query_tokens_list = None
         self.query_path = query_path
+        self.verbose = verbose
 
     def load_corpus(self):
         """Load the corpus
         """
         if os.path.exists(os.path.join(PICKLES_FOLDER, self.corpus_file_name + ".pkl")):
-            print("Loading corpus from pickle")
+            if self.verbose:
+                print("Loading corpus from pickle")
             self.corpus = load_data(self.corpus_file_name + ".pkl", PICKLES_FOLDER)
         else:
-            print(f"Loading corpus from {self.corpus_path}")
+            if self.verbose:
+                print(f"Loading corpus from {self.corpus_path}")
             if '.csv' in self.corpus_path:
                 self.corpus = pd.read_csv(self.corpus_path)
             elif '.json' in self.corpus_path:
@@ -73,14 +80,16 @@ class CorpusBase:
         """Load the query
         """
         if os.path.exists(os.path.join(PICKLES_FOLDER, self.query_file_name + ".pkl")):
-            print("Loading query from pickle")
+            if self.verbose:
+                print("Loading query from pickle")
             self.query = load_data(self.query_file_name + ".pkl", PICKLES_FOLDER)
         else:
-            print(f"Loading query from {self.query_path}")
+            if self.verbose:
+                print(f"Loading query from {self.query_path}")
             if '.csv' in self.query_path:
                 self.query = pd.read_csv(self.query_path)
 
-    def tokenize_corpus(self, drop_text=True):
+    def tokenize_corpus(self, drop_text:bool=True):
         """Tokenize the corpus
 
         Args:
@@ -88,9 +97,9 @@ class CorpusBase:
         """
         if self.corpus is None:
             self.load_corpus()
-        self.corpus, self.tokens_list = tokenize_documents(self.corpus_file_name, self.corpus, drop_text)
+        self.corpus, self.tokens_list = tokenize_documents(self.corpus_file_name, self.corpus, drop_text, self.verbose)
     
-    def tokenize_query(self, drop_text=True):
+    def tokenize_query(self, drop_text:bool=True):
         """Tokenize the query
 
         Args:
@@ -100,4 +109,4 @@ class CorpusBase:
             self.load_query()
         if 'query' in self.query.columns:
             self.query.rename(columns={'query': 'text'}, inplace=True)
-        self.query, self.query_tokens_list = tokenize_documents(self.query_file_name, self.query, drop_text) 
+        self.query, self.query_tokens_list = tokenize_documents(self.query_file_name, self.query, drop_text, self.verbose) 

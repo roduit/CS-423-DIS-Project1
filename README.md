@@ -106,4 +106,4 @@ Based on these three images, the optimal solutions take these parameter values:
 
 and gives a recall@10 of 0.8 on the dev set and 0.80074 on the test set (value provided by Kaggle).
 ## Contributors
-This repository has been elaborated by Fabio Palmisano, Yann Cretton and Vincent Roduit during the 2024 fall Semester.
+This repository has been elaborated by Fabio Palmisano, Yann Cretton and Vincent Roduit during the 2024 fall Semester as a mandatory part of the course *CS-423: Distributed Information Systems*.

@@ -51,7 +51,6 @@ The project is structured as follow:
     ├── main.ipynb
     ├── processing.py
     ├── scores.py
-    ├── test.py
     └── utils.py
 ```
 The notebook *main.ipynb* summarizes the different results obtained. The notebook *kaggle_notebook.ipynb* is a copy of the notebook provided in Kaggle. The only purpose of this notebook is to produce the best prediction. Note that the path of some constants has been changed in order to match the disired paths on Kaggle. The rest of the code is identical to the dedicated files.

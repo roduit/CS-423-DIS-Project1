@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-# -*- authors : Vincent Roduit -*-
+# -*- authors : Yann Cretton -*-
 # -*- date : 2024-09-30 -*-
-# -*- Last revision: 2024-10-21 by Vincent Roduit -*-
+# -*- Last revision: 2024-11-01 by Vincent Roduit -*-
 # -*- python version : 3.9.19 -*-
 # -*- Description: Class for the processing of the corpus *-
 

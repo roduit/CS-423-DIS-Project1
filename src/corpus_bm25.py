@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # -*- authors : Yann Cretton -*-
 # -*- date : 2024-09-30 -*-
-# -*- Last revision: 2024-11-01 by Vincent Roduit -*-
+# -*- Last revision: 2024-11-02 by Vincent Roduit -*-
 # -*- python version : 3.9.19 -*-
 # -*- Description: Class for the processing of the corpus *-
 
@@ -29,7 +29,8 @@ class CorpusBm25(CorpusBase):
             k1:float=1.5, 
             b:float=0.75, 
             filter:bool=False,
-            filt_docs:int=10000,
+            filt_docs_en:int=10000,
+            filt_docs_other:int=5000,
             verbose:bool=True):
         """
         Initialize the CorpusBM25 object.
@@ -68,7 +69,9 @@ class CorpusBm25(CorpusBase):
 
             * filter (bool): whether to filter the results or not.
 
-            * filt_docs (int): the number of documents to filter.
+            * filt_docs_en (int): the number of documents to filter.
+
+            * filt_docs_other (int): the number of documents to filter for other languages.
 
             * inverted_index (dict): the inverted index of the corpus.
 
@@ -89,7 +92,8 @@ class CorpusBm25(CorpusBase):
         self.k1 = k1
         self.b = b
         self.filter = filter
-        self.filt_docs = int(filt_docs)
+        self.filt_docs_en = int(filt_docs_en)
+        self.filt_docs_other = int(filt_docs_other)
         self.time = None
         self.verbose = verbose
 
@@ -324,7 +328,10 @@ class CorpusBm25(CorpusBase):
                 # Get the top 10 documents for the current query
                 relevant_docs = np.array(dict_relevant_docs[query_lang])
                 if self.filter:
-                    relevant_docs = self._get_relevant_docs(query, relevant_docs, self.filt_docs)
+                    if query_lang == 'en':
+                        relevant_docs = self._get_relevant_docs(query, relevant_docs, self.filt_docs_en)
+                    else:
+                        relevant_docs = self._get_relevant_docs(query, relevant_docs, self.filt_docs_other)
                 top_docs = self._BM25_search(query, docid,relevant_docs, k=10)
                 
                 # Append the result as a dictionary
@@ -339,7 +346,10 @@ class CorpusBm25(CorpusBase):
                 # Get the top 10 documents for the current query
                 relevant_docs = np.array(dict_relevant_docs[query_lang])
                 if self.filter:
-                    relevant_docs = self._get_relevant_docs(query, relevant_docs, self.filt_docs)
+                    if query_lang == 'en':
+                        relevant_docs = self._get_relevant_docs(query, relevant_docs, self.filt_docs_en)
+                    else:
+                        relevant_docs = self._get_relevant_docs(query, relevant_docs, 5000)
                 top_docs = self._BM25_search(query, docid,relevant_docs, k=10)
                 
                 # Append the result as a dictionary

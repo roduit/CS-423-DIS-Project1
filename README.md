@@ -56,6 +56,8 @@ The project is structured as follow:
 ```
 The notebook *main.ipynb* summarizes the different results obtained. The notebook *kaggle_notebook.ipynb* is a copy of the notebook provided on Kaggle. The only purpose of this notebook is to produce the best prediction. Note that the path of some constants has been changed in order to match the desired paths on Kaggle. The rest of the code is identical to the dedicated files.
 
+- [Report](./resources/cs_423_project1_report.pdf) can be found at *resources/cs_423_project1_report.pdf*
+
 - *corpus_word2vec.py* and *corpus_bm25.py* are two classes that computes the prediction using either word2vec or bm25.
 
 ## Data Wrangling

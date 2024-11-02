@@ -53,19 +53,29 @@ The project is structured as follow:
     ├── scores.py
     └── utils.py
 ```
-The notebook *main.ipynb* summarizes the different results obtained. The notebook *kaggle_notebook.ipynb* is a copy of the notebook provided in Kaggle. The only purpose of this notebook is to produce the best prediction. Note that the path of some constants has been changed in order to match the disired paths on Kaggle. The rest of the code is identical to the dedicated files.
+The notebook *main.ipynb* summarizes the different results obtained. The notebook *kaggle_notebook.ipynb* is a copy of the notebook provided on Kaggle. The only purpose of this notebook is to produce the best prediction. Note that the path of some constants has been changed in order to match the desired paths on Kaggle. The rest of the code is identical to the dedicated files.
+
+- *corpus_word2vec.py* and *corpus_bm25.py* are two classes that computes the prediction using either word2vec or bm25.
 
 ## Data Wrangling
-There are different data available:
-• corpus.json: This file contains a list of documents, that consti-
-tute the database for the retrieval system.
-• *dev.csv*: This File contains a set of queries. The corresponding
+There are different data available:\
+• corpus.json: This file contains a list of documents, that constitute the database for the retrieval system.\
+• *dev.csv*: This file contains a set of queries. The corresponding
 positive document and ten negative documents are attached to
-these queries. The language of the query is also available.
-• *train.csv*: This file is similar to dev.csv.
+these queries. The language of the query is also available.\
+• *train.csv*: This file is similar to dev.csv.\
 • *test.csv*: This file is the one that should be used for testing the
 retrieval system. Only the query, as well as the language is
 available in this document.
+The table below summarizes the number of documents and queries corresponding to the different langagues.
+    
+| Dataset     | #en   | #fr   | #de   | #it   | #es   | #ko  | #ar  |
+|-------------|-------|-------|-------|-------|-------|------|------|
+| corpus.json | 21e3  | 11e3  | 11e3  | 11e3  | 11e3  | 7893 | 8829 |
+| train.csv   | 10e3  | 1608  | 1847  | 2151  | 2254  | 2198 | 1817 |
+| dev.csv     | 200   | 200   | 200   | 200   | 200   | 200  | 200  |
+| test.csv    | 200   | 200   | 200   | 200   | 200   | 200  | 200  |
+    
 ## Data Processing
 These processing steps are performed on the corpus and queries:
 1) Tokenizing the text: For this step, the RegexpTokenizer class

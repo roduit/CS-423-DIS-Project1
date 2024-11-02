@@ -40,6 +40,7 @@ The project is structured as follow:
 │   ├── logo-epfl.png
 │   ├── recall_per_lang.png
 │   ├── recall_time.png
+│   ├── cs_423_project1_report.pdf
 │   ├── recallvsnbdocs.png
 │   └── update_all_revisions.py
 └── src

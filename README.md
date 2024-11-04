@@ -62,6 +62,30 @@ The notebook *main.ipynb* summarizes the different results obtained. The noteboo
 
 - *corpus_word2vec.py* and *corpus_bm25.py* are two classes that computes the prediction using either word2vec or bm25.
 
+## Data structure
+In order to use the provided code, the data folder should have the following structure:
+```
+.
+├── corpus
+│   ├── corpus.json
+│   └── corpus_reduced.json
+├── dev.csv
+├── sample_submission.csv
+├── stopwords
+│   ├── arabic
+│   ├── english
+│   ├── french
+│   ├── german
+│   ├── italian
+│   ├── korean
+│   └── spanish
+├── test.csv
+├── test_reduced.csv
+└── train.csv
+```
+
+The stopwords can be downloaded from [NLTK](https://www.nltk.org) for every language except Korean. The Korean stopwords list can be downloaded from [this repository](https://github.com/stopwords-iso/stopwords-ko).
+
 ## Data Wrangling
 There are different data available:\
 • corpus.json: This file contains a list of documents, that constitute the database for the retrieval system.\

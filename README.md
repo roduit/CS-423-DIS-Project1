@@ -10,6 +10,8 @@ CS-423 Distributed Information System
 </div> 
 
 # Project 1: Document Retrieval
+Team Name: SLO-remake \
+[Link to Kaggle Notebook](https://www.kaggle.com/code/roduitv/main-slo)
 
 ## Table of Contents
 

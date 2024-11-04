@@ -17,6 +17,7 @@ Team Name: SLO-remake \
 
 - [Abstract](#abstract)
 - [Repository Structure](#repository-structure)
+- [Data Structure](#data-structure)
 - [Data Wrangling](#data-wrangling)
 - [Data Processing](#data-processing)
 - [Methods](#methods)
